@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Passport & Vibes — Bus Trips Waitlist</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--ivory:#F5EFE4;--deep:#0D1117;--gold:#C9A84C;--gold-light:#E8C97A;--sand:#D4B896;--text-muted:#8B7355;--border:rgba(201,168,76,0.2);--accent:#4CAF82;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--deep);color:var(--ivory);font-family:'DM Sans',sans-serif;font-weight:300;min-height:100vh;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");opacity:0.4;pointer-events:none;z-index:1;}
+  .bg-texture{position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 10% 90%,rgba(201,168,76,0.07) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 90% 10%,rgba(76,175,130,0.04) 0%,transparent 50%),linear-gradient(180deg,#0D1117 0%,#0A0F0D 50%,#0D1117 100%);z-index:0;}
+
+  /* Road lines background */
+  .road-lines{position:fixed;inset:0;z-index:0;overflow:hidden;opacity:0.03;}
+  .road-lines svg{width:100%;height:100%;}
+
+  .page{display:none;position:relative;z-index:2;min-height:100vh;}
+  .page.active{display:grid;grid-template-columns:1fr 1fr;max-width:1400px;margin:0 auto;}
+  #page-confirm.active{display:flex;align-items:center;justify-content:center;}
+
+  /* LEFT */
+  .left-panel{padding:60px 60px 60px 80px;display:flex;flex-direction:column;justify-content:space-between;position:sticky;top:0;height:100vh;}
+  .logo{font-family:'Cormorant Garamond',serif;font-size:13px;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);opacity:0;animation:fadeUp 0.8s ease 0.1s forwards;}
+  .logo span{color:var(--text-muted);}
+  .logo-sub{font-size:10px;letter-spacing:0.2em;color:var(--text-muted);margin-top:4px;text-transform:uppercase;}
+  .hero-content{flex:1;display:flex;flex-direction:column;justify-content:center;padding:40px 0;}
+  .label{font-size:11px;letter-spacing:0.3em;text-transform:uppercase;color:var(--accent);margin-bottom:24px;opacity:0;animation:fadeUp 0.8s ease 0.3s forwards;display:flex;align-items:center;gap:12px;}
+  .label::before{content:'';width:32px;height:1px;background:var(--accent);display:inline-block;}
+  h1{font-family:'Cormorant Garamond',serif;font-size:clamp(48px,5vw,68px);font-weight:300;line-height:1.05;color:var(--ivory);opacity:0;animation:fadeUp 0.8s ease 0.5s forwards;}
+  h1 em{font-style:italic;color:var(--gold-light);}
+  .subhead{margin-top:28px;font-size:15px;line-height:1.8;color:var(--sand);max-width:380px;opacity:0;animation:fadeUp 0.8s ease 0.7s forwards;}
+  .route-cards{display:flex;flex-direction:column;gap:10px;margin-top:36px;opacity:0;animation:fadeUp 0.8s ease 0.9s forwards;}
+  .route-card{display:flex;align-items:center;gap:14px;background:rgba(201,168,76,0.05);border:1px solid var(--border);padding:12px 16px;border-radius:2px;}
+  .route-icon{font-size:18px;flex-shrink:0;}
+  .route-info strong{display:block;font-size:12px;color:var(--ivory);font-weight:400;margin-bottom:2px;}
+  .route-info span{font-size:11px;color:var(--text-muted);}
+  .live-counter{display:inline-flex;align-items:center;gap:10px;background:rgba(76,175,130,0.08);border:1px solid rgba(76,175,130,0.2);padding:10px 18px;border-radius:2px;margin-top:32px;opacity:0;animation:fadeUp 0.8s ease 1.1s forwards;}
+  .live-dot{width:6px;height:6px;background:var(--accent);border-radius:50%;animation:pulse-dot 2s ease infinite;}
+  @keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
+  .counter-text{font-size:12px;color:var(--sand);}
+  .counter-number{font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--accent);}
+  .footer-note{font-size:11px;color:var(--text-muted);opacity:0;animation:fadeUp 0.8s ease 1.2s forwards;}
+
+  /* RIGHT */
+  .right-panel{padding:60px 80px 60px 60px;display:flex;align-items:center;}
+  .form-container{width:100%;max-width:480px;opacity:0;animation:fadeUp 0.9s ease 0.6s forwards;}
+  .step-indicator{display:flex;align-items:center;margin-bottom:40px;}
+  .step-dot{width:28px;height:28px;border-radius:50%;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text-muted);transition:all 0.4s ease;}
+  .step-dot.active{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,0.1);box-shadow:0 0 20px rgba(201,168,76,0.2);}
+  .step-dot.done{border-color:var(--gold);background:var(--gold);color:var(--deep);}
+  .step-line{flex:1;height:1px;background:var(--border);transition:background 0.4s ease;}
+  .step-line.active{background:var(--gold);}
+  .form-step{display:none;}
+  .form-step.active{display:block;animation:stepIn 0.4s ease forwards;}
+  @keyframes stepIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+  .step-title{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:300;color:var(--ivory);margin-bottom:8px;line-height:1.2;}
+  .step-subtitle{font-size:13px;color:var(--text-muted);margin-bottom:36px;line-height:1.6;}
+  .field-group{margin-bottom:20px;}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  label{display:block;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
+  input,select,textarea{width:100%;background:rgba(245,239,228,0.04);border:1px solid var(--border);border-radius:2px;padding:14px 16px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:300;color:var(--ivory);outline:none;transition:all 0.3s ease;appearance:none;-webkit-appearance:none;}
+  input::placeholder,textarea::placeholder{color:rgba(139,115,85,0.5);}
+  input:focus,select:focus,textarea:focus{border-color:var(--gold);background:rgba(201,168,76,0.06);box-shadow:0 0 0 3px rgba(201,168,76,0.08);}
+  select{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238B7355' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 16px center;padding-right:40px;}
+  select option{background:#1A1410;color:var(--ivory);}
+
+  /* Trip type chips */
+  .chip-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:8px;}
+  .chip-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px;}
+  .chip{padding:12px;border:1px solid var(--border);border-radius:2px;font-size:12px;color:var(--sand);cursor:pointer;transition:all 0.25s ease;text-align:center;user-select:none;line-height:1.4;}
+  .chip:hover{border-color:rgba(201,168,76,0.4);color:var(--ivory);}
+  .chip.selected{border-color:var(--gold);background:rgba(201,168,76,0.12);color:var(--gold-light);}
+  .chip-icon{display:block;font-size:18px;margin-bottom:4px;}
+  .chip-note{font-size:11px;color:var(--text-muted);margin-top:8px;}
+
+  /* Budget cards */
+  .budget-options{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:8px;}
+  .budget-card{padding:14px;border:1px solid var(--border);border-radius:2px;cursor:pointer;transition:all 0.25s ease;user-select:none;}
+  .budget-card:hover{border-color:rgba(201,168,76,0.4);}
+  .budget-card.selected{border-color:var(--gold);background:rgba(201,168,76,0.08);}
+  .budget-range{font-family:'Cormorant Garamond',serif;font-size:17px;color:var(--ivory);display:block;margin-bottom:2px;}
+  .budget-label{font-size:10px;letter-spacing:0.1em;color:var(--text-muted);text-transform:uppercase;}
+
+  .btn-primary{width:100%;padding:17px 32px;background:var(--gold);color:var(--deep);border:none;border-radius:2px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;letter-spacing:0.2em;text-transform:uppercase;cursor:pointer;transition:all 0.3s ease;margin-top:28px;position:relative;overflow:hidden;}
+  .btn-primary::before{content:'';position:absolute;inset:0;background:rgba(255,255,255,0.15);transform:translateX(-100%);transition:transform 0.4s ease;}
+  .btn-primary:hover::before{transform:translateX(0);}
+  .btn-primary:hover{background:var(--gold-light);transform:translateY(-1px);box-shadow:0 8px 24px rgba(201,168,76,0.3);}
+  .btn-primary:disabled{opacity:0.6;cursor:not-allowed;transform:none;}
+  .btn-back{background:none;border:none;color:var(--text-muted);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;margin-top:16px;transition:color 0.2s;display:flex;align-items:center;gap:8px;}
+  .btn-back:hover{color:var(--sand);}
+  .progress-bar{width:100%;height:2px;background:var(--border);margin-bottom:36px;border-radius:2px;overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-light));border-radius:2px;transition:width 0.5s cubic-bezier(0.4,0,0.2,1);}
+  .scarcity{background:rgba(76,175,130,0.06);border:1px solid rgba(76,175,130,0.2);padding:14px 18px;border-radius:2px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;gap:16px;}
+  .scarcity-text{font-size:12px;color:var(--sand);line-height:1.4;}
+  .scarcity-text strong{color:#7DD4A8;}
+  .seats-remaining{font-family:'Cormorant Garamond',serif;font-size:32px;color:var(--accent);line-height:1;flex-shrink:0;}
+  .seats-label{font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-muted);display:block;text-align:right;}
+  .field-error{font-size:11px;color:#E07070;margin-top:5px;display:none;}
+  .field-group.error input,.field-group.error select{border-color:rgba(224,112,112,0.5);}
+  .field-group.error .field-error{display:block;}
+
+  /* Confirmation */
+  .confirm-box{text-align:center;padding:60px 40px;max-width:560px;opacity:0;animation:fadeUp 0.6s ease 0.2s forwards;}
+  .confirm-icon{width:64px;height:64px;border:1px solid var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 28px;font-size:28px;animation:glow-green 2s ease infinite;}
+  @keyframes glow-green{0%,100%{box-shadow:0 0 20px rgba(76,175,130,0.2)}50%{box-shadow:0 0 40px rgba(76,175,130,0.4)}}
+  .confirm-title{font-family:'Cormorant Garamond',serif;font-size:48px;font-weight:300;color:var(--ivory);margin-bottom:16px;line-height:1.1;}
+  .confirm-title em{font-style:italic;color:var(--gold-light);}
+  .confirm-subtitle{font-size:15px;color:var(--sand);line-height:1.8;margin-bottom:36px;}
+  .seat-badge{display:inline-flex;align-items:center;gap:16px;background:rgba(76,175,130,0.08);border:1px solid rgba(76,175,130,0.2);padding:20px 32px;border-radius:2px;margin-bottom:36px;}
+  .seat-num{font-family:'Cormorant Garamond',serif;font-size:56px;font-weight:300;color:#7DD4A8;line-height:1;}
+  .seat-info{text-align:left;}
+  .seat-info strong{display:block;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent);font-weight:400;margin-bottom:4px;}
+  .seat-info span{font-size:12px;color:var(--text-muted);}
+  .confirm-perks{display:flex;flex-direction:column;gap:12px;text-align:left;margin-bottom:32px;max-width:420px;margin-left:auto;margin-right:auto;}
+  .perk-item{display:flex;align-items:flex-start;gap:12px;font-size:13px;color:var(--sand);line-height:1.5;}
+  .perk-item::before{content:'🚌';font-size:12px;margin-top:1px;flex-shrink:0;}
+  .share-prompt{border-top:1px solid var(--border);padding-top:24px;margin-top:8px;max-width:420px;margin-left:auto;margin-right:auto;}
+  .share-prompt p{font-size:12px;color:var(--text-muted);margin-bottom:14px;}
+  .share-link-box{display:flex;}
+  .share-link{flex:1;background:rgba(245,239,228,0.04);border:1px solid var(--border);border-right:none;border-radius:2px 0 0 2px;padding:10px 14px;font-size:12px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .copy-btn{padding:10px 18px;background:rgba(76,175,130,0.12);border:1px solid rgba(76,175,130,0.2);border-radius:0 2px 2px 0;color:var(--accent);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:0.1em;transition:all 0.2s;}
+  .copy-btn:hover{background:rgba(76,175,130,0.22);}
+
+  @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+  @media(max-width:900px){
+    .page.active{grid-template-columns:1fr;}
+    .left-panel{position:static;height:auto;padding:48px 32px 32px;}
+    .right-panel{padding:0 32px 64px;align-items:flex-start;}
+    .chip-grid{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+<div class="bg-texture"></div>
+<div class="road-lines">
+  <svg viewBox="0 0 1400 900" preserveAspectRatio="none">
+    <g stroke="#C9A84C" stroke-width="0.8" fill="none" stroke-dasharray="20,15">
+      <line x1="0" y1="200" x2="1400" y2="200"/>
+      <line x1="0" y1="450" x2="1400" y2="450"/>
+      <line x1="0" y1="700" x2="1400" y2="700"/>
+    </g>
+    <g stroke="#4CAF82" stroke-width="0.5" fill="none">
+      <line x1="200" y1="0" x2="200" y2="900"/>
+      <line x1="700" y1="0" x2="700" y2="900"/>
+      <line x1="1200" y1="0" x2="1200" y2="900"/>
+    </g>
+  </svg>
+</div>
+
+<!-- WAITLIST PAGE -->
+<div class="page active" id="page-form">
+  <div class="left-panel">
+    <div>
+      <div class="logo">Passport <span>&</span> Vibes Travel, LLC</div>
+      <div class="logo-sub">Bus Trip Experiences</div>
+    </div>
+    <div class="hero-content">
+      <div class="label">Reserve Your Seat</div>
+      <h1>The Bus<br>is <em>Leaving.</em><br>Are You On?</h1>
+      <p class="subhead">Day trips. Weekend getaways. Multi-day adventures. All aboard — but seats fill fast and we don't wait.</p>
+
+      <div class="route-cards">
+        <div class="route-card">
+          <div class="route-icon">🌅</div>
+          <div class="route-info">
+            <strong>Day Trips</strong>
+            <span>There and back — no overnight needed</span>
+          </div>
+        </div>
+        <div class="route-card">
+          <div class="route-icon">🌙</div>
+          <div class="route-info">
+            <strong>Weekend Getaways</strong>
+            <span>Friday to Sunday — fully loaded</span>
+          </div>
+        </div>
+        <div class="route-card">
+          <div class="route-icon">🗺️</div>
+          <div class="route-info">
+            <strong>Multi-Day Adventures</strong>
+            <span>3–5 days of pure experience</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="live-counter">
+        <div class="live-dot"></div>
+        <span class="counter-text"><span class="counter-number" id="recentCount">4</span> people just grabbed a spot</span>
+      </div>
+    </div>
+    <p class="footer-note">Join the list. Be first to know when a trip drops near you.</p>
+  </div>
+
+  <div class="right-panel">
+    <div class="form-container">
+      <div class="scarcity">
+        <div><p class="scarcity-text"><strong>Seats are first come, first served.</strong><br>Waitlist members get 24-hour early access before the public.</p></div>
+        <div style="text-align:right">
+          <div class="seats-remaining" id="seatsLeft">12</div>
+          <span class="seats-label">priority spots</span>
+        </div>
+      </div>
+
+      <div class="step-indicator">
+        <div class="step-dot active" id="dot-1"><span>1</span></div>
+        <div class="step-line" id="line-1"></div>
+        <div class="step-dot" id="dot-2"><span>2</span></div>
+        <div class="step-line" id="line-2"></div>
+        <div class="step-dot" id="dot-3"><span>3</span></div>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:33%"></div></div>
+
+      <!-- STEP 1: Who you are -->
+      <div class="form-step active" id="step-1">
+        <h2 class="step-title">Who's<br><em style="font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--gold-light)">rolling with us?</em></h2>
+        <p class="step-subtitle">Quick basics — so we know who to call when a trip drops.</p>
+        <div class="field-row">
+          <div class="field-group" id="fg-firstName">
+            <label>First Name</label>
+            <input type="text" id="firstName" placeholder="First name">
+            <span class="field-error">Required</span>
+          </div>
+          <div class="field-group" id="fg-lastName">
+            <label>Last Name</label>
+            <input type="text" id="lastName" placeholder="Last name">
+            <span class="field-error">Required</span>
+          </div>
+        </div>
+        <div class="field-group" id="fg-email">
+          <label>Email Address</label>
+          <input type="email" id="email" placeholder="your@email.com">
+          <span class="field-error">A valid email is required</span>
+        </div>
+        <div class="field-group">
+          <label>Phone (Recommended — we text trip alerts)</label>
+          <input type="tel" id="phone" placeholder="+1 (000) 000-0000">
+        </div>
+        <div class="field-group" id="fg-departure">
+          <label>Your Departure City</label>
+          <input type="text" id="departure" placeholder="e.g. Shreveport, LA">
+          <span class="field-error">Required — we match you to nearby trips</span>
+        </div>
+        <button class="btn-primary" type="button" onclick="goToStep(2)">Continue — Step 2 of 3 →</button>
+      </div>
+
+      <!-- STEP 2: Trip preferences -->
+      <div class="form-step" id="step-2">
+        <h2 class="step-title">Your trip<br><em style="font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--gold-light)">preferences.</em></h2>
+        <p class="step-subtitle">Tell us what you're looking for so we match you to the right trips first.</p>
+
+        <div class="field-group">
+          <label>Trip Type — What are you down for?</label>
+          <div class="chip-grid">
+            <div class="chip" onclick="toggleChip(this,'Day Trip')"><span class="chip-icon">🌅</span>Day Trip</div>
+            <div class="chip" onclick="toggleChip(this,'Weekend Getaway')"><span class="chip-icon">🌙</span>Weekend</div>
+            <div class="chip" onclick="toggleChip(this,'Multi-Day Adventure')"><span class="chip-icon">🗺️</span>Multi-Day</div>
+            <div class="chip" onclick="toggleChip(this,'Whatever looks good')"><span class="chip-icon">✨</span>All of it</div>
+          </div>
+        </div>
+
+        <div class="field-group" style="margin-top:20px">
+          <label>Trip Vibe — What's your scene?</label>
+          <div class="chip-grid-3">
+            <div class="chip" onclick="toggleVibe(this,'Party & Nightlife')"><span class="chip-icon">🎉</span>Party</div>
+            <div class="chip" onclick="toggleVibe(this,'Beach & Relaxation')"><span class="chip-icon">🏖️</span>Beach</div>
+            <div class="chip" onclick="toggleVibe(this,'Culture & Sightseeing')"><span class="chip-icon">🏛️</span>Culture</div>
+            <div class="chip" onclick="toggleVibe(this,'Concerts & Events')"><span class="chip-icon">🎵</span>Events</div>
+            <div class="chip" onclick="toggleVibe(this,'Food & Dining')"><span class="chip-icon">🍽️</span>Food</div>
+            <div class="chip" onclick="toggleVibe(this,'Whatever hits')"><span class="chip-icon">🔥</span>All vibes</div>
+          </div>
+        </div>
+
+        <div class="field-group" style="margin-top:20px">
+          <label>Travel Dates / Flexibility</label>
+          <select id="travelDates">
+            <option value="" disabled selected>When are you ready to roll?</option>
+            <option>ASAP — I'm ready now</option>
+            <option>Within the next month</option>
+            <option>1–3 months from now</option>
+            <option>3–6 months from now</option>
+            <option>Completely flexible</option>
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label>Dream Destination (Optional)</label>
+          <input type="text" id="destination" placeholder="e.g. New Orleans, Atlanta, Miami...">
+        </div>
+
+        <button class="btn-primary" type="button" onclick="goToStep(3)">Almost there — Step 3 of 3 →</button>
+        <button class="btn-back" type="button" onclick="goToStep(1)">← Back</button>
+      </div>
+
+      <!-- STEP 3: Party & Budget -->
+      <div class="form-step" id="step-3">
+        <h2 class="step-title">Your crew<br><em style="font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--gold-light)">& budget.</em></h2>
+        <p class="step-subtitle">Last step — this helps us make sure there's room for your whole group.</p>
+
+        <div class="field-group">
+          <label>Party Size — How many seats do you need?</label>
+          <select id="partySize">
+            <option value="" disabled selected>How many people in your group?</option>
+            <option>Just me (1)</option>
+            <option>Me + 1 (2 people)</option>
+            <option>Small crew (3–5)</option>
+            <option>Squad (6–10)</option>
+            <option>Big group (10+)</option>
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label>Budget Per Person — Per Trip</label>
+          <div class="budget-options">
+            <div class="budget-card" onclick="selectBudget(this,'Under $150')"><span class="budget-range">Under $150</span><span class="budget-label">Day trip range</span></div>
+            <div class="budget-card" onclick="selectBudget(this,'$150–$300')"><span class="budget-range">$150–$300</span><span class="budget-label">Weekend ready</span></div>
+            <div class="budget-card" onclick="selectBudget(this,'$300–$600')"><span class="budget-range">$300–$600</span><span class="budget-label">Multi-day vibes</span></div>
+            <div class="budget-card" onclick="selectBudget(this,'$600+')"><span class="budget-range">$600+</span><span class="budget-label">All-in experience</span></div>
+          </div>
+        </div>
+
+        <div class="field-group" style="margin-top:20px">
+          <label>Anything else? (Optional)</label>
+          <textarea id="notes" rows="3" placeholder="Special requests, accessibility needs, group events, birthdays..."></textarea>
+        </div>
+
+        <button class="btn-primary" type="button" id="submitBtn" onclick="submitForm()">🚌 &nbsp; Reserve My Spot on the List</button>
+        <button class="btn-back" type="button" onclick="goToStep(2)">← Back</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRMATION PAGE -->
+<div class="page" id="page-confirm">
+  <div class="confirm-box">
+    <div class="confirm-icon">🚌</div>
+    <h2 class="confirm-title">Seat's<br><em>reserved.</em></h2>
+    <p class="confirm-subtitle">You're on the Passport & Vibes bus trip list.<br>When a trip drops near you, you'll hear about it first.</p>
+    <div class="seat-badge">
+      <div class="seat-num" id="yourPosition">#52</div>
+      <div class="seat-info"><strong>Your Spot</strong><span>Priority boarding secured</span></div>
+    </div>
+    <div class="confirm-perks">
+      <div class="perk-item">24-hour early access before we post to the public — first come, first served.</div>
+      <div class="perk-item">Trip alerts matched to your departure city so you only hear about what's relevant.</div>
+      <div class="perk-item">Waitlist-only pricing on select departures — never available to walk-ins.</div>
+      <div class="perk-item">Refer a friend and both of you move up the priority list.</div>
+    </div>
+    <div class="share-prompt">
+      <p>Who else from your crew should be on this list?</p>
+      <div class="share-link-box">
+        <div class="share-link" id="shareLink">passportandvibes.com/bus?ref=PVB52</div>
+        <button class="copy-btn" onclick="copyLink()">Copy</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const FORMSPREE_ID = 'xgoqpdpv';
+  const BASE = 51;
+  let step = 1, tripTypes = [], vibes = [], budget = '';
+  let count = parseInt(localStorage.getItem('pvBusCount') || BASE);
+
+  setInterval(()=>{ document.getElementById('recentCount').textContent = Math.floor(Math.random()*5)+2; }, 8000);
+
+  function goToStep(s) {
+    if(s===2 && !validate1()) return;
+    document.getElementById('step-'+step).classList.remove('active');
+    for(let i=1;i<=3;i++){
+      const d = document.getElementById('dot-'+i);
+      d.className = 'step-dot';
+      if(i<s){ d.className='step-dot done'; d.innerHTML='✓'; }
+      else if(i===s){ d.className='step-dot active'; d.innerHTML='<span>'+i+'</span>'; }
+      else{ d.innerHTML='<span>'+i+'</span>'; }
+    }
+    for(let i=1;i<=2;i++) document.getElementById('line-'+i).className = 'step-line'+(i<s?' active':'');
+    document.getElementById('progressFill').style.width = {1:'33%',2:'66%',3:'100%'}[s];
+    step = s;
+    document.getElementById('step-'+s).classList.add('active');
+  }
+
+  function validate1() {
+    const fn = document.getElementById('firstName').value.trim();
+    const ln = document.getElementById('lastName').value.trim();
+    const em = document.getElementById('email').value.trim();
+    const dep = document.getElementById('departure').value.trim();
+    document.getElementById('fg-firstName').classList.toggle('error', !fn);
+    document.getElementById('fg-lastName').classList.toggle('error', !ln);
+    const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em);
+    document.getElementById('fg-email').classList.toggle('error', !ok);
+    document.getElementById('fg-departure').classList.toggle('error', !dep);
+    return fn && ln && ok && dep;
+  }
+
+  function toggleChip(el, val) {
+    el.classList.toggle('selected');
+    tripTypes = el.classList.contains('selected') ? [...tripTypes, val] : tripTypes.filter(d=>d!==val);
+  }
+
+  function toggleVibe(el, val) {
+    el.classList.toggle('selected');
+    vibes = el.classList.contains('selected') ? [...vibes, val] : vibes.filter(d=>d!==val);
+  }
+
+  function selectBudget(el, val) {
+    document.querySelectorAll('.budget-card').forEach(c=>c.classList.remove('selected'));
+    el.classList.add('selected');
+    budget = val;
+  }
+
+  function calcScore() {
+    let s = 0;
+    s += {'$600+':4,'$300–$600':3,'$150–$300':2,'Under $150':1}[budget] || 0;
+    s += Math.min(tripTypes.length, 2);
+    s += Math.min(vibes.length, 2);
+    const d = document.getElementById('travelDates').value;
+    if(d?.includes('ASAP')) s+=3; else if(d?.includes('month')) s+=2; else if(d) s+=1;
+    const p = document.getElementById('partySize').value;
+    if(p?.includes('10+')) s+=3; else if(p?.includes('6–10')) s+=2; else if(p) s+=1;
+    if(document.getElementById('phone').value.trim()) s+=1;
+    return s;
+  }
+
+  async function submitForm() {
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Reserving your spot…';
+    count++;
+    localStorage.setItem('pvBusCount', count);
+    const position = count;
+    const now = new Date();
+    const ts = now.toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'2-digit'})+' '+now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+    const ref = 'PVB'+position;
+
+    const payload = {
+      'Position':        position,
+      'First Name':      document.getElementById('firstName').value.trim(),
+      'Last Name':       document.getElementById('lastName').value.trim(),
+      'Email':           document.getElementById('email').value.trim(),
+      'Phone':           document.getElementById('phone').value.trim() || 'N/A',
+      'Departure City':  document.getElementById('departure').value.trim(),
+      'Trip Types':      tripTypes.join(', ') || 'Not specified',
+      'Trip Vibes':      vibes.join(', ') || 'Not specified',
+      'Travel Dates':    document.getElementById('travelDates').value || 'Not specified',
+      'Dream Destination': document.getElementById('destination').value.trim() || 'N/A',
+      'Party Size':      document.getElementById('partySize').value || 'Not specified',
+      'Budget':          budget || 'Not specified',
+      'Lead Score':      calcScore()+'/16',
+      'Notes':           document.getElementById('notes').value.trim() || 'N/A',
+      'Timestamp':       ts,
+      'Referral Code':   ref,
+      '_subject':        '🚌 New Bus Trip Signup — '+document.getElementById('firstName').value.trim()+' '+document.getElementById('lastName').value.trim()+' ('+document.getElementById('departure').value.trim()+')'
+    };
+
+    try {
+      const res = await fetch('https://formspree.io/f/'+FORMSPREE_ID, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json','Accept':'application/json'},
+        body: JSON.stringify(payload)
+      });
+      if(res.ok) {
+        showConfirmation(position, ref);
+      } else {
+        btn.disabled = false;
+        btn.textContent = '🚌  Reserve My Spot on the List';
+        alert('Something went wrong — please try again.');
+      }
+    } catch(e) {
+      btn.disabled = false;
+      btn.textContent = '🚌  Reserve My Spot on the List';
+      alert('Network error — please check your connection and try again.');
+    }
+  }
+
+  function showConfirmation(position, ref) {
+    document.getElementById('yourPosition').textContent = '#'+position;
+    document.getElementById('shareLink').textContent = 'passportandvibes.com/bus?ref='+ref;
+    document.getElementById('seatsLeft').textContent = Math.max(1, 12-(count-BASE));
+    document.getElementById('page-form').classList.remove('active');
+    document.getElementById('page-confirm').classList.add('active');
+    window.scrollTo(0,0);
+  }
+
+  function copyLink() {
+    navigator.clipboard.writeText(document.getElementById('shareLink').textContent).then(()=>{
+      const b = document.querySelector('.copy-btn');
+      b.textContent = 'Copied!'; b.style.color = '#4CAF82';
+      setTimeout(()=>{ b.textContent='Copy'; b.style.color=''; }, 2000);
+    });
+  }
+</script>
+</body>
+</html>
